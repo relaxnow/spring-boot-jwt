@@ -3,6 +3,8 @@ package murraco;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import murraco.model.Project;
+import murraco.service.ProjectService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -19,6 +21,9 @@ public class JwtAuthServiceApp implements CommandLineRunner {
 
   @Autowired
   UserService userService;
+
+  @Autowired
+  ProjectService projectService;
 
   public static void main(String[] args) {
     SpringApplication.run(JwtAuthServiceApp.class, args);
@@ -46,6 +51,17 @@ public class JwtAuthServiceApp implements CommandLineRunner {
     client.setRoles(new ArrayList<Role>(Arrays.asList(Role.ROLE_CLIENT)));
 
     userService.signup(client);
-  }
 
+    Project p = new Project();
+    p.setId(1);
+    p.setName("Example Project 1");
+    p.setOwner(admin);
+    projectService.create(p);
+
+    Project p2 = new Project();
+    p2.setId(2);
+    p2.setName("Example Project 2");
+    p2.setOwner(client);
+    projectService.create(p2);
+  }
 }

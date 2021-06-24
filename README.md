@@ -1,22 +1,129 @@
-# Spring Boot JWT
+# VULNERABLE FORK - PRODUCED FOR TRAINING PURPOSES, DO NOT USE)
 
-![](https://img.shields.io/badge/build-success-brightgreen.svg)
+# Demo 1 - Cracking default HS* passwords with JWT Tool
+-1. Install this project and run mvn spring:boot:run
+0. Install JWT Tool:
+   * Clone https://github.com/ticarpi/jwt_tool
+   * Run pipenv install
+   * Run pipenv shell
+1. Run:
+```shell
+TOKEN=$(curl -X POST 'http://localhost:8080/users/signin?username=admin&password=admin')
+python jwt_tool.py $TOKEN -C -d jwt-common.txt
+```
+Observe:
+```shell
 
-# Stack
+        \   \        \         \          \                    \ 
+   \__   |   |  \     |\__    __| \__    __|                    |
+         |   |   \    |      |          |       \         \     |
+         |        \   |      |          |    __  \     __  \    |
+  \      |      _     |      |          |   |     |   |     |   |
+   |     |     / \    |      |          |   |     |   |     |   |
+\        |    /   \   |      |          |\        |\        |   |
+ \______/ \__/     \__|   \__|      \__| \______/  \______/ \__|
+ Version 2.2.3                \______|             @ticarpi      
 
-![](https://img.shields.io/badge/java_8-✓-blue.svg)
-![](https://img.shields.io/badge/spring_boot-✓-blue.svg)
-![](https://img.shields.io/badge/mysql-✓-blue.svg)
-![](https://img.shields.io/badge/jwt-✓-blue.svg)
-![](https://img.shields.io/badge/swagger_2-✓-blue.svg)
+Original JWT: 
 
-You can find a related post for this repository [here](https://medium.com/@xoor/jwt-authentication-service-44658409e12c).
+[+] secret-key is the CORRECT key!
+You can tamper/fuzz the token contents (-T/-I) and sign it using:
+python3 jwt_tool.py [options here] -S HS256 -p "secret-key"
+```
 
-***
+# Demo 2 - Misconfigured permitAll()
+0. Install this project and run mvn spring:boot:run
+1. Go to http://localhost:8080/swagger-ui.html#/
+2. Get a token with /signing username/password client
+3. Authorize with "Bearer $TOKEN"
+4. Verify that the token works with /user/me
+5. Verify projects list works with /projects
+6. Try to delete a project with /projects/1/delete
+7. Observe it works, thought not intended.
+8. Switch lines in WebSecurityConfig from:
+   ```java
+   .antMatchers("/projects/**").permitAll()
+   .antMatchers("/projects/*/delete").hasRole("ADMIN")
+   ```
+   to:
+   ```java
+   .antMatchers("/projects/*/delete").hasRole("ADMIN")
+   .antMatchers("/projects/**").permitAll()
+   ```
+9. Restart app
+10. Get client token, authorize, verify it works, verify projects
+11. Try /project/1/delete again
+12. Observe this no longer works
 
-<h3 align="center">Please help this repo with a :star: if you find it useful! :blush:</h3>
+# Demo 3 - Misconfigured antMatch()
+1. Run Demo 2.
+2. Copy curl command from /project/1/delete, for example: 
+   ```shell
+   curl -X POST "http://localhost:8080/projects/1/delete" -H "accept: */*" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjbGllbnQiLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX0NMSUVOVCJ9XSwiaWF0IjoxNjI0NTQ2NTY4LCJleHAiOjE2MjQ1NDY4Njh9.uas5FGtAumegif2FP41TtnK647VKrl0WWqTE-KOjkII"
+   ```
+3. Add trailing slash, for example:
+   ```shell
+   curl -X POST "http://localhost:8080/projects/1/delete/" -H "accept: */*" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjbGllbnQiLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX0NMSUVOVCJ9XSwiaWF0IjoxNjI0NTQ2NTY4LCJleHAiOjE2MjQ1NDY4Njh9.uas5FGtAumegif2FP41TtnK647VKrl0WWqTE-KOjkII"
+   ```
+4. Observe this again works to delete the project.
+5. Change:
+   ```java
+   .antMatchers(HttpMethods.POST, "/projects/*/delete").hasRole("ADMIN")
+   ```
+   To:
+   ```java
+   .mvcMatchers(HttpMethods.POST, "/projects/*/delete").hasRole("ADMIN")
+   ```
+6. Restart app
+7. Observe adding a slash no longer works
 
-***
+
+# Demo 4 - Misconfigured RequestMapping()
+1. Run Demo 2
+2. Copy curl command from /project/1/delete, for example:
+   ```shell
+   curl -X POST "http://localhost:8080/projects/1/delete" -H "accept: */*" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjbGllbnQiLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX0NMSUVOVCJ9XSwiaWF0IjoxNjI0NTQ2NTY4LCJleHAiOjE2MjQ1NDY4Njh9.uas5FGtAumegif2FP41TtnK647VKrl0WWqTE-KOjkII"
+   ```
+3. Change HTTP Method to DELETE, for example:
+   ```shell
+   curl -X DELETE "http://localhost:8080/projects/1/delete/" -H "accept: */*" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjbGllbnQiLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX0NMSUVOVCJ9XSwiaWF0IjoxNjI0NTQ2NTY4LCJleHAiOjE2MjQ1NDY4Njh9.uas5FGtAumegif2FP41TtnK647VKrl0WWqTE-KOjkII"
+   ```
+4. Observe this again works to delete the project.
+5. Change:
+   ```java
+   .antMatchers(HttpMethods.POST, "/projects/*/delete").hasRole("ADMIN")
+   ```
+   To:
+   ```java
+   .mvcMatchers(HttpMethods.POST, "/projects/*/delete").hasRole("ADMIN")
+   ```
+6. Restart app
+7. Observe adding a slash no longer works
+
+
+# Demo 5 - IDOR
+0. Install this project and run mvn spring:boot:run
+1. Go to http://localhost:8080/swagger-ui.html#/
+2. Get a token with /signing username/password client
+3. Authorize with "Bearer $TOKEN"
+4. Verify that the token works with /user/me
+5. Verify projects list works with /projects
+6. Try to delete a client project with /projects/1/delete
+7. Observe it works
+8. Try to delete an admin project with /projects/1/delete
+9. Observe it works!
+10. Add the following to ProjectService.java, above the "delete" method
+```java
+  @PreAuthorize("isAuthenticated() && #p.owner.username == principal.username")
+```
+11. Reload app.
+12. Try to delete a client project with /projects/1/delete
+13. Observe it works
+14. Try to delete an admin project with /projects/1/delete
+15. Observe it no longer works!
+
+
+# ORIGINAL README:
 
 # File structure
 
