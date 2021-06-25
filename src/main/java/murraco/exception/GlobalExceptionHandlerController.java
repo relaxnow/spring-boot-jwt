@@ -25,6 +25,7 @@ public class GlobalExceptionHandlerController {
       public Map<String, Object> getErrorAttributes(WebRequest webRequest, boolean includeStackTrace) {
         Map<String, Object> errorAttributes = super.getErrorAttributes(webRequest, includeStackTrace);
         errorAttributes.remove("exception");
+        errorAttributes.remove("trace");
         return errorAttributes;
       }
     };
