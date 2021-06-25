@@ -89,13 +89,13 @@ python3 jwt_tool.py [options here] -S HS256 -p "secret-key"
    curl -X DELETE "http://localhost:8080/projects/1/delete/" -H "accept: */*" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjbGllbnQiLCJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX0NMSUVOVCJ9XSwiaWF0IjoxNjI0NTQ2NTY4LCJleHAiOjE2MjQ1NDY4Njh9.uas5FGtAumegif2FP41TtnK647VKrl0WWqTE-KOjkII"
    ```
 4. Observe this again works to delete the project.
-5. Change:
+5. In ProjectController.java change:
    ```java
-   .antMatchers(HttpMethods.POST, "/projects/*/delete").hasRole("ADMIN")
+   @RequestMapping(value = "/{id}/delete")
    ```
    To:
    ```java
-   .mvcMatchers(HttpMethods.POST, "/projects/*/delete").hasRole("ADMIN")
+   @PostMapping(value = "/{id}/delete")
    ```
 6. Restart app
 7. Observe adding a slash no longer works
